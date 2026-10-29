@@ -16,17 +16,21 @@ Ajustar configuración: se agrega EXPECTED_COMMIT: ${{ github.sha }} al paso Smo
 ### Defecto 2
 - Job y etapa: Job sca, etapa pre-build
 - Problema que causa en el pipeline: Trivy se ejecuta con include dev-deps, asi que analiza las dependencias de desarrollo que no viajan en la imagen porque el dockerfile las omite por lo que el control esta probando algo que no se despliega por lo que si alguna de esas herramientas de DEV tiene una CVE alta el pipeline se detiene por una vulnerabilidad no alcanzable en producción y el reporte se llena de ruido.
-- Link al commit: 
+- Link al commit: https://github.com/Alfredo123255/INF384-LAB4-20220825/commit/367cd1e5ccf6e00a8a8dbc3636e0b601196d7784
 - Corrección (una o más: mover de etapa / dejar como informativo / eliminar / ajustar configuración / modificar tests):
+- Eliminar --include-dev-deps para que sca solo analice dependencias de produccion
 - Evidencia (dato observado, con link al run o fragmento de la salida local): en el run base https://github.com/Alfredo123255/INF384-LAB4-20220825/actions/runs/40956515299 el paso Trivy del job sca se ejecutó con "--include-dev-deps" y su Report Summary muestra:
   │ package-lock.json │ npm │ 0 │
   Es decir, analizó el lock file completo. En package-lock.json, [84] de 122 paquetes tienen "dev": true: el 69 % de lo que analiza sca no llega a la imagen.
 ### Defecto 3
-- Job y etapa:
-- Problema que causa en el pipeline:
+- Job y etapa: Job integration etapa pre-build
+- Problema que causa en el pipeline: los test de integracion asumen que la base arranca con los saldos semilla y dependen del orden en que se ejecutan, pero la base es un archivo que no se borra antes de correr. SI el archivo ya existe, por un reintento los test fallan aunque el codigo este bien.
 - Link al commit:
 - Corrección (una o más: mover de etapa / dejar como informativo / eliminar / ajustar configuración / modificar tests):
-- Evidencia (dato observado, con link al run o fragmento de la salida local):
+  BOrrar /tmp/wallet.db del job antes de ejecutar los test, para que cada corrida parta de los usuarios semilla
+- Evidencia (dato observado, con link al run o fragmento de la salida local):en el run base https://github.com/Alfredo123255/INF384-LAB4-20220825/actions/runs/40956515299 el paso Trivy del job sca se ejecutó con "--include-dev-deps" y su Report Summary muestra:
+  │ package-lock.json │ npm │ 0 │
+  Es decir, analizó el lock file completo. En package-lock.json, [84] de 122 paquetes tienen "dev": true: el 69 % de lo que analiza sca no llega a la imagen.
 ### Defecto 4
 - Job y etapa:
 - Problema que causa en el pipeline:
