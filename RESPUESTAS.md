@@ -1,6 +1,6 @@
 # Respuestas · Laboratorio 4
 Alumno: [20220825]
-Presupuesto: [ ] min  Métrica DORA: [ ]
+Presupuesto: [11] min  Métrica DORA: [change failure rate]
 
 ## Parte 1 · Diagnóstico
 ### Defecto 1
@@ -47,46 +47,48 @@ Ajustar configuración: se agrega EXPECTED_COMMIT: ${{ github.sha }} al paso Smo
 - Evidencia (dato observado, con link al run o fragmento de la salida local): en el run #3 https://github.com/Alfredo123255/INF384-LAB4-20220825/actions/runs/40961930282 (disparado ≈16:57, duración total 14m 7s), el job load duró 12m 9s, de ≈16:59 a ≈17:11. El workflow no tiene concurrency, solo el job deploy la tiene: cualquier push a main o PR hecho en esos 12 minutos despliega otra imagen en la misma función Lambda mientras load sigue midiendo, y el resultado del run deja de corresponder a su propia versión.
 
 ## Parte 2 · Implementación
-- Link al run en verde en main:
-- Link al pull request:
-- Defecto de la aplicación introducido (archivo y descripción):
-- Job que debería detenerlo:
-- Link al run fallido:
+- Link al run en verde en main: https://github.com/Alfredo123255/INF384-LAB4-20220825/actions/runs/40965169878
+- Link al pull request: https://github.com/Alfredo123255/INF384-LAB4-20220825/pull/1
+- Defecto de la aplicación introducido (archivo y descripción): src/wallet.js, línea 54. Se cambió la condición "cuentaOrigen.saldo < centimos" por "cuentaOrigen.saldo <= centimos". Ahora, cuando un usuario intenta transferir exactamente todo su saldo
+- Job que debería detenerlo: unit. El test "transferir todo el saldo deja el origen en cero" (test/unit/wallet.test.js) transfiere el saldo exacto y espera que el origen quede en 0. También falla integration
+- Link al run fallido: https://github.com/Alfredo123255/INF384-LAB4-20220825/actions/runs/40966341432
 
 ## Parte 3 · Decisión bajo restricción
-Link al run medido:
+Link al run medido: https://github.com/Alfredo123255/INF384-LAB4-20220825/actions/runs/40965169878
 
 | Job | Duración (min:seg) |
 |---|---|
-| unit | |
-| integration | |
-| sast | |
-| sca | |
-| build-push | |
-| deploy | |
-| smoke | |
-| e2e | |
-| load | |
-| **Total** | |
+| unit | 0:11 |
+| integration | 0:17 |
+| sast | 0:20|
+| sca | 0:22|
+| build-push | 0:48|
+| deploy | 0:20|
+| smoke | 0:13|
+| e2e | 0:42|
+| load | 12:11|
+| **Total** | 15:24|
 
 Resultado de load en ese run:
 | Métrica | Valor |
 |---|---|
-| p90 | |
-| p95 | |
-| Máximo | |
-| Tasa de error | |
-| Requests por segundo | |
+| p90 | 23.05 ms |
+| p95 | 25.29 ms|
+| Máximo | 120.68 ms|
+| Tasa de error | 0%|
+| Requests por segundo | 53.10|
 
-Conclusión sobre el comportamiento bajo carga:
+Conclusión sobre el comportamiento bajo carga: con 30 usuarios virtuales durante 12 minutos, Monedero Andino respondio de forma estable y rapida. El 95% de los requests tardaron menos de 25.29 ms y no hubo errores. l 95 % de los requests tardó menos de 25,29 ms y no hubo errores. La diferencia entre la mediana (17,59 ms) y el p95 (25,29 ms) es pequeña, así que la latencia es consistente. El máximo de 120,68 ms es un caso aislado, probablemente un arranque en frío de una instancia nueva de Lambda. Con esta carga el sistema está muy lejos del umbral actual de 500 ms.
 
-SLO propuesto (percentil, valor, ventana) y justificación:
+SLO propuesto (percentil, valor, ventana) y justificación: p95 < 50 ms, en una ventana de 28 días. El p95 medido fue 25,29 ms; 50 ms deja un margen de aproximadamente el doble para que load no falle por la variación normal entre runs, y aun así detecta si la latencia se duplica. Se configura SLO_P95: 50 en ci.yml.
 
-SLA propuesto y diferencia con el SLO:
+SLA propuesto y diferencia con el SLO: 99,5 % de disponibilidad mensual y p95 < 200 ms al mes; si no se cumple, el cliente recibe un crédito. El SLA es un compromiso contractual con el cliente; el SLO es la meta interna del equipo. El SLO es más exigente (50 ms frente a 200 ms) para detectar y corregir problemas antes de incumplir el SLA.
 
 Cambios para cumplir el presupuesto:
 | Cambio | Job | Minutos recuperados |
-|---|---|---|
+| Stages de test/load/transferir.js: rampa de subida de 1m a 30s, carga constante de 10m a 4m  y rampa de bajada de 1m a 30s. Load pasa de 12 a 5 minutos. | load | ≈ 7:00 |
+| SLO_P95 de 500 a 50 ms en ci.yml (no cambia la duración; ajusta el umbral que evalúa load). | load | 0:00 |
+
 
 Total resultante: [ ] min
 Link al run en main con los cambios:
