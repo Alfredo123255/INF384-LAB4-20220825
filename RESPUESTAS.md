@@ -25,18 +25,19 @@ Ajustar configuración: se agrega EXPECTED_COMMIT: ${{ github.sha }} al paso Smo
 ### Defecto 3
 - Job y etapa: Job integration etapa pre-build
 - Problema que causa en el pipeline: los test de integracion asumen que la base arranca con los saldos semilla y dependen del orden en que se ejecutan, pero la base es un archivo que no se borra antes de correr. SI el archivo ya existe, por un reintento los test fallan aunque el codigo este bien.
-- Link al commit:
+- Link al commit: https://github.com/Alfredo123255/INF384-LAB4-20220825/commit/f112ce33282e3ed21bc8e206152189452ada9e44
 - Corrección (una o más: mover de etapa / dejar como informativo / eliminar / ajustar configuración / modificar tests):
   BOrrar /tmp/wallet.db del job antes de ejecutar los test, para que cada corrida parta de los usuarios semilla
 - Evidencia (dato observado, con link al run o fragmento de la salida local):en el run base https://github.com/Alfredo123255/INF384-LAB4-20220825/actions/runs/40956515299 el paso Trivy del job sca se ejecutó con "--include-dev-deps" y su Report Summary muestra:
   │ package-lock.json │ npm │ 0 │
   Es decir, analizó el lock file completo. En package-lock.json, [84] de 122 paquetes tienen "dev": true: el 69 % de lo que analiza sca no llega a la imagen.
 ### Defecto 4
-- Job y etapa:
-- Problema que causa en el pipeline:
+- Job y etapa: job load, etapa post-deploy
+- Problema que causa en el pipeline: load y e2e dependen de smoke, entonces corren en paralelo contra la misma funcion Lambda. Las transferencias de e2e mezclan con los 30 usuarios virtuales de k6: el p95 mide load queda contamidado por trafico que no es de la prueba de carga.
 - Link al commit:
 - Corrección (una o más: mover de etapa / dejar como informativo / eliminar / ajustar configuración / modificar tests):
-- Evidencia (dato observado, con link al run o fragmento de la salida local):
+  Mover de etapa load para ejecutarce despues de e2e para que solo mida carga cuando e2e ya aprobo.
+- Evidencia (dato observado, con link al run o fragmento de la salida local): el job e2e duró 46 s y terminó a las 4:20 PM (empezó ≈ 4:19:14 PM). El job load duró 12 min 9 s y terminó ≈ 4:31 PM, o sea que empezó ≈ 4:19 PM, mientras e2e todavía se ejecutaba. Los dos jobs corrieron al mismo tiempo contra la misma Function URL.
 ### Defecto 5
 - Job y etapa:
 - Problema que causa en el pipeline:
