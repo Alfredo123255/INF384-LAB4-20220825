@@ -91,11 +91,11 @@ Cambios para cumplir el presupuesto:
 
 
 Total resultante: [ ] min
-Link al run en main con los cambios:
+Link al run en main con los cambios: https://github.com/Alfredo123255/INF384-LAB4-20220825/actions/runs/40969359202
 
-Riesgo aceptado (defecto de la aplicación concreto y efecto en la métrica DORA asignada):
+Riesgo aceptado (defecto de la aplicación concreto y efecto en la métrica DORA asignada): al reducir la carga constante de 10 a 4 minutos, el pipeline deja de detectar defectos que solo aparecen con carga sostenida. Ejemplo: si en src/db.js se quita el LIMIT 50 de la consulta de movimientos, /historial se vuelve más lento a medida que crece la tabla. En 4 minutos la tabla no crece lo suficiente para superar el SLO, el cambio pasa el pipeline y la latencia se degrada recién en producción. Change failure rate SUBE: más despliegues que pasan el pipeline terminan causando una falla en producción.
 
-Decisión sobre sast (se queda / se mueve a otra etapa o evento / informativo) y razón:
+Decisión sobre sast (se queda / se mueve a otra etapa o evento / informativo) y razón: se queda en pre-build. Cuesta 0:20 de los 11 min (aproximadamente el 2 %) y corre en paralelo con unit, integration y sca, así que no retrasa el despliegue. Detiene antes de construir patrones inseguros, como una inyección SQL por concatenación en src/db.js. Si se quitara o pasara a informativo, esos cambios llegarían a producción y change failure rate subiría. Ahorrar 20 segundos no justifica empeorar la métrica asignada.
 
 ## Declaración de uso de IA
 Herramientas usadas y para qué:
