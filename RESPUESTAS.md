@@ -41,7 +41,7 @@ Ajustar configuración: se agrega EXPECTED_COMMIT: ${{ github.sha }} al paso Smo
 ### Defecto 5
 - Job y etapa: smoke, e2e y load, etapa post deploy
 - Problema que causa en el pipeline: Todos los runs, de pr y de main, despliegan la misma  funcion lambda. deploy esta serializado pero las pruebas posteriores no, el deploy del run nuevo reemplaza la imagen mientras estas 3 utilizan la de la version anterior. El resultado aprueba o reprueba la version anterior no la del run actual
-- Link al commit:
+- Link al commit: https://github.com/Alfredo123255/INF384-LAB4-20220825/commit/43e2be06e67f5a10a2f5992de569299d98e2aefc
 - Corrección (una o más: mover de etapa / dejar como informativo / eliminar / ajustar configuración / modificar tests):
 - ajustar configuración. Se agrega concurrency a nivel de workflow (group: ci-${{ github.repository }}, cancel-in-progress: false) para que un run espere a que termine el anterior antes de desplegar y probar la Lambda compartida.
 - Evidencia (dato observado, con link al run o fragmento de la salida local): en el run #3 https://github.com/Alfredo123255/INF384-LAB4-20220825/actions/runs/40961930282 (disparado ≈16:57, duración total 14m 7s), el job load duró 12m 9s, de ≈16:59 a ≈17:11. El workflow no tiene concurrency, solo el job deploy la tiene: cualquier push a main o PR hecho en esos 12 minutos despliega otra imagen en la misma función Lambda mientras load sigue midiendo, y el resultado del run deja de corresponder a su propia versión.
