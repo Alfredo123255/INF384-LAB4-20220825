@@ -14,11 +14,13 @@ Ajustar configuración: se agrega EXPECTED_COMMIT: ${{ github.sha }} al paso Smo
   saldo: {"usuario":"ana","saldo":1000}
   No aparece la línea "commit:", así que smoke.sh se saltó la verificación de la versión desplegada.
 ### Defecto 2
-- Job y etapa:
-- Problema que causa en el pipeline:
-- Link al commit:
+- Job y etapa: Job sca, etapa pre-build
+- Problema que causa en el pipeline: Trivy se ejecuta con include dev-deps, asi que analiza las dependencias de desarrollo que no viajan en la imagen porque el dockerfile las omite por lo que el control esta probando algo que no se despliega por lo que si alguna de esas herramientas de DEV tiene una CVE alta el pipeline se detiene por una vulnerabilidad no alcanzable en producción y el reporte se llena de ruido.
+- Link al commit: 
 - Corrección (una o más: mover de etapa / dejar como informativo / eliminar / ajustar configuración / modificar tests):
-- Evidencia (dato observado, con link al run o fragmento de la salida local):
+- Evidencia (dato observado, con link al run o fragmento de la salida local): en el run base https://github.com/Alfredo123255/INF384-LAB4-20220825/actions/runs/40956515299 el paso Trivy del job sca se ejecutó con "--include-dev-deps" y su Report Summary muestra:
+  │ package-lock.json │ npm │ 0 │
+  Es decir, analizó el lock file completo. En package-lock.json, [84] de 122 paquetes tienen "dev": true: el 69 % de lo que analiza sca no llega a la imagen.
 ### Defecto 3
 - Job y etapa:
 - Problema que causa en el pipeline:
