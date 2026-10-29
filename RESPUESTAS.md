@@ -34,16 +34,17 @@ Ajustar configuración: se agrega EXPECTED_COMMIT: ${{ github.sha }} al paso Smo
 ### Defecto 4
 - Job y etapa: job load, etapa post-deploy
 - Problema que causa en el pipeline: load y e2e dependen de smoke, entonces corren en paralelo contra la misma funcion Lambda. Las transferencias de e2e mezclan con los 30 usuarios virtuales de k6: el p95 mide load queda contamidado por trafico que no es de la prueba de carga.
-- Link al commit:
+- Link al commit: https://github.com/Alfredo123255/INF384-LAB4-20220825/commit/c8447247017e961ddd82d4a57583c643c9091189
 - Corrección (una o más: mover de etapa / dejar como informativo / eliminar / ajustar configuración / modificar tests):
   Mover de etapa load para ejecutarce despues de e2e para que solo mida carga cuando e2e ya aprobo.
 - Evidencia (dato observado, con link al run o fragmento de la salida local): el job e2e duró 46 s y terminó a las 4:20 PM (empezó ≈ 4:19:14 PM). El job load duró 12 min 9 s y terminó ≈ 4:31 PM, o sea que empezó ≈ 4:19 PM, mientras e2e todavía se ejecutaba. Los dos jobs corrieron al mismo tiempo contra la misma Function URL.
 ### Defecto 5
-- Job y etapa:
-- Problema que causa en el pipeline:
+- Job y etapa: smoke, e2e y load, etapa post deploy
+- Problema que causa en el pipeline: Todos los runs, de pr y de main, despliegan la misma  funcion lambda. deploy esta serializado pero las pruebas posteriores no, el deploy del run nuevo reemplaza la imagen mientras estas 3 utilizan la de la version anterior. El resultado aprueba o reprueba la version anterior no la del run actual
 - Link al commit:
 - Corrección (una o más: mover de etapa / dejar como informativo / eliminar / ajustar configuración / modificar tests):
-- Evidencia (dato observado, con link al run o fragmento de la salida local):
+- ajustar configuración. Se agrega concurrency a nivel de workflow (group: ci-${{ github.repository }}, cancel-in-progress: false) para que un run espere a que termine el anterior antes de desplegar y probar la Lambda compartida.
+- Evidencia (dato observado, con link al run o fragmento de la salida local): en el run #3 https://github.com/Alfredo123255/INF384-LAB4-20220825/actions/runs/40961930282 (disparado ≈16:57, duración total 14m 7s), el job load duró 12m 9s, de ≈16:59 a ≈17:11. El workflow no tiene concurrency, solo el job deploy la tiene: cualquier push a main o PR hecho en esos 12 minutos despliega otra imagen en la misma función Lambda mientras load sigue midiendo, y el resultado del run deja de corresponder a su propia versión.
 
 ## Parte 2 · Implementación
 - Link al run en verde en main:
